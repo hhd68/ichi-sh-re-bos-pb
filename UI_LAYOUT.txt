@@ -1,0 +1,170 @@
+╔═══════════════════════════════════════════════════════════════╗
+║             NEW SIGNAL-SCAN CHECKLIST UI                      ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────┐
+│  □  HTF: Bias (---)                                          │
+│     └─ Shows: BUY (green) / SELL (red) / --- (gray)         │
+│                                                               │
+│  □  MTF: SH (---)                                            │
+│     └─ Shows: BUY (green) / SELL (red) / --- (gray)         │
+│                                                               │
+│  □  MTF: RE (---)                                            │
+│     └─ Shows: BUY (green) / SELL (red) / --- (gray)         │
+│                                                               │
+│  □  LTF: BOS (---)                                           │
+│     └─ Shows: BUY (green) / SELL (red) / --- (gray)         │
+│                                                               │
+│  □  LTF: PB (---)                                            │
+│     └─ Shows: BUY (green) / SELL (red) / --- (gray)         │
+│                                                               │
+│  □  DECISION:  [  BUY  ]  [ SELL  ]                          │
+│     └─ Buttons active when all conditions met               │
+│                                                               │
+├───────────────────────────────────────────────────────────────┤
+│  □  LIMIT order mode                                         │
+│                                                               │
+│  □  Show SL/TP preview                                       │
+│                                                               │
+│  ┌─────────────┐  ┌─────────────┐                           │
+│  │    ENTRY    │  │  CLOSE ALL  │                           │
+│  └─────────────┘  └─────────────┘                           │
+│                                                               │
+│  Status: Ready                                               │
+│  Daily loss remaining: $xxx                                  │
+│                                                               │
+│  SL: xxx.xx                                                  │
+│  TP1: xxx.xx  TP2: xxx.xx  TP3: xxx.xx                      │
+│  R:R = 1:3                                                   │
+└───────────────────────────────────────────────────────────────┘
+
+╔═══════════════════════════════════════════════════════════════╗
+║                     SIGNAL FLOW DIAGRAM                       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+    Chart TF (LTF)
+         │
+         ├──> MTF (derived)
+         │         │
+         │         └──> HTF (derived)
+         │                  │
+         │                  ▼
+         │            ╔═══════════╗
+         │            ║   BIAS    ║ HTF, Ichimoku 9/26/52
+         │            ║  (Shift1) ║ 5 conditions
+         │            ╚═══════════╝
+         │                  │
+         │                  │ Pass? (BUY/SELL)
+         │                  ▼
+         │            ╔═══════════╗
+         │            ║    SH     ║ MTF, Swing detection
+         │            ║ (Fake+Ret)║ Fractal pattern
+         │            ╚═══════════╝
+         │                  │
+         │                  │ Pass? Zone set
+         │                  ▼
+         │            ╔═══════════╗
+         │            ║    RE     ║ MTF, Zone respect
+         │            ║ (5 candles║ No violation
+         │            ╚═══════════╝
+         │                  │
+         │                  │ Pass? RE confirmed
+         ▼                  ▼
+    ╔═══════════╗    ╔═══════════╗
+    ║    BOS    ║    ║  Continue ║
+    ║ (HH/LL 5  ║◄───║           ║
+    ║  lookback)║    ╚═══════════╝
+    ╚═══════════╝
+         │
+         │ Pass? Zone set
+         ▼
+    ╔═══════════╗
+    ║    PB     ║ LTF, Pullback
+    ║ (5 candles║ Touch BOS zone
+    ╚═══════════╝
+         │
+         │ ALL PASS!
+         ▼
+    ╔═══════════╗
+    ║ DECISION: ║
+    ║ BUY/SELL  ║
+    ╚═══════════╝
+
+╔═══════════════════════════════════════════════════════════════╗
+║                 TIMEFRAME MAPPING TABLE                       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+┌─────────┬─────────┬─────────┐
+│   LTF   │   MTF   │   HTF   │
+│ (Chart) │ (Medium)│ (High)  │
+├─────────┼─────────┼─────────┤
+│   M1    │   M5    │   M15   │
+│   M5    │   M15   │   H1    │
+│   M15   │   H1    │   H4    │
+│   H1    │   H4    │   D1    │
+│   H4    │   D1    │   W1    │
+│   D1    │   W1    │   MN1   │
+└─────────┴─────────┴─────────┘
+
+╔═══════════════════════════════════════════════════════════════╗
+║                   CONDITION DETAILS                           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+1. BIAS (HTF):
+   BUY when ALL true:
+   • Close > max(SSA, SSB)
+   • Tenkan > Kijun
+   • SSA > SSB
+   • Chikou > max(SSA[26], SSB[26])
+   • Chikou > Close[26]
+   
+   SELL: Mirror conditions (all <)
+
+2. SH (MTF):
+   BUY: Swing high fake break + return
+   • Find swing high (fractal)
+   • Break above (≥1 close above)
+   • Return below swing high
+   
+   SELL: Swing low fake break + return
+
+3. RE (MTF):
+   Within 5 candles after SH:
+   BUY: No close < SH zone low
+   SELL: No close > SH zone high
+
+4. BOS (LTF):
+   Lookback 5 bars (bars 2-6):
+   BUY: Close[1] > HH
+   SELL: Close[1] < LL
+
+5. PB (LTF):
+   Within 5 candles:
+   Price touches/enters BOS zone
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    CHECKBOX STATES                            ║
+╚═══════════════════════════════════════════════════════════════╝
+
+☐  Empty box = Condition not met (gray text)
+☑  Checked box (X) = Condition met (green/red text)
+
+Example when BUY signal is forming:
+☑  HTF: Bias (BUY)     ← Green text
+☑  MTF: SH (BUY)       ← Green text
+☑  MTF: RE (BUY)       ← Green text
+☐  LTF: BOS (---)      ← Gray text (waiting)
+☐  LTF: PB (---)       ← Gray text (waiting)
+☐  DECISION: ---       ← Gray until all pass
+
+When ALL conditions pass:
+☑  HTF: Bias (BUY)
+☑  MTF: SH (BUY)
+☑  MTF: RE (BUY)
+☑  LTF: BOS (BUY)
+☑  LTF: PB (BUY)
+☑  DECISION: BUY       ← BUY button highlighted
+
+═══════════════════════════════════════════════════════════════
+              END OF UI LAYOUT DOCUMENTATION
+═══════════════════════════════════════════════════════════════
