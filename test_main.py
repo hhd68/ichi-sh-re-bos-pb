@@ -14,14 +14,15 @@ class TestIchiShReBosPb(unittest.TestCase):
 
     def test_main_output(self):
         """Test that main() outputs the correct string"""
-        # Capture stdout
+        # Capture stdout using context manager pattern
         captured_output = StringIO()
-        sys.stdout = captured_output
-        
-        result = main()
-        
-        # Reset stdout
-        sys.stdout = sys.__stdout__
+        old_stdout = sys.stdout
+        try:
+            sys.stdout = captured_output
+            result = main()
+        finally:
+            # Ensure stdout is always restored
+            sys.stdout = old_stdout
         
         # Verify output
         self.assertEqual(result, "ichi+sh+re+bos+pb")
@@ -37,6 +38,4 @@ class TestIchiShReBosPb(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # Suppress main() output during import
-    sys.stdout = StringIO()
     unittest.main()
